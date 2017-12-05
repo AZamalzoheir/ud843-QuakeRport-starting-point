@@ -53,12 +53,13 @@ import java.nio.charset.MalformedInputException;
 import java.util.ArrayList;
 
 public class EarthquakeActivity extends AppCompatActivity implements LoaderCallbacks<ArrayList<Earthquake>>{
-    private static final int EARTHQUAKE_LOADER_ID = 1;
     public static final String LOG_TAG = EarthquakeActivity.class.getName();
     public static final String USGS_REQUEST_URL =
             "https://earthquake.usgs.gov/fdsnws/event/1/query?format=geojson&eventtype=earthquake&orderby=time&minmag=6&limit=10";
-    private EarthquakeAdapter mAdapter;
+    private static final int EARTHQUAKE_LOADER_ID = 1;
     TextView emptyListView;
+    private EarthquakeAdapter mAdapter;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -79,7 +80,7 @@ public class EarthquakeActivity extends AppCompatActivity implements LoaderCallb
         });
         earthQuakeAsyncTask task = new earthQuakeAsyncTask();
         task.execute(USGS_REQUEST_URL);
-
+        
         LoaderManager loaderManager=getLoaderManager();
         loaderManager.initLoader(EARTHQUAKE_LOADER_ID,null,this);
     }
