@@ -52,7 +52,7 @@ import java.nio.charset.Charset;
 import java.nio.charset.MalformedInputException;
 import java.util.ArrayList;
 
-public class EarthquakeActivity extends AppCompatActivity implements LoaderCallbacks<ArrayList<Earthquake>>{
+public class EarthquakeActivity extends AppCompatActivity implements LoaderCallbacks<ArrayList<Earthquake>> {
     public static final String LOG_TAG = EarthquakeActivity.class.getName();
     public static final String USGS_REQUEST_URL =
             "https://earthquake.usgs.gov/fdsnws/event/1/query?format=geojson&eventtype=earthquake&orderby=time&minmag=6&limit=10";
@@ -64,7 +64,7 @@ public class EarthquakeActivity extends AppCompatActivity implements LoaderCallb
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.earthquake_activity);
-        emptyListView=(TextView)findViewById(R.id.empty);
+        emptyListView = (TextView) findViewById(R.id.empty);
         ListView earthquakeListView = (ListView) findViewById(R.id.list);
         earthquakeListView.setEmptyView(emptyListView);
         mAdapter = new EarthquakeAdapter(this, new ArrayList<Earthquake>());
@@ -78,31 +78,33 @@ public class EarthquakeActivity extends AppCompatActivity implements LoaderCallb
                 startActivity(websiteeIntent);
             }
         });
-        earthQuakeAsyncTask task = new earthQuakeAsyncTask();
-        task.execute(USGS_REQUEST_URL);
-        
-        LoaderManager loaderManager=getLoaderManager();
-        loaderManager.initLoader(EARTHQUAKE_LOADER_ID,null,this);
+        /*earthQuakeAsyncTask task = new earthQuakeAsyncTask();
+        task.execute(USGS_REQUEST_URL);*/
+        ConnectivityManager cm = (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
+        NetworkInfo networkInfo = cm.getActiveNetworkInfo();
+        boolean connected = networkInfo.isConnected();
+        if (connected && networkInfo != null) {
+            LoaderManager loaderManager = getLoaderManager();
+            loaderManager.initLoader(EARTHQUAKE_LOADER_ID, null, this);
+        } else {
+            View progressBar = findViewById(R.id.loading);
+            progressBar.setVisibility(View.GONE);
+            emptyListView.setText(R.string.no_internet);
+        }
+
     }
 
     @Override
     public Loader<ArrayList<Earthquake>> onCreateLoader(int i, Bundle bundle) {
-        Log.i(LOG_TAG,"in create loader");
-        return new EarthquakeLoader(this,USGS_REQUEST_URL);
+        Log.i(LOG_TAG, "in create loader");
+        return new EarthquakeLoader(this, USGS_REQUEST_URL);
     }
 
     @Override
     public void onLoadFinished(Loader<ArrayList<Earthquake>> loader, ArrayList<Earthquake> earthquakes) {
-        ConnectivityManager cm= (ConnectivityManager)getSystemService(Context.CONNECTIVITY_SERVICE);
-        NetworkInfo networkInfo=cm.getActiveNetworkInfo();
-        boolean connected=networkInfo.isConnected();
-        if(connected&&networkInfo!=null) {
+
             View progressBar = findViewById(R.id.loading);
             progressBar.setVisibility(View.GONE);
-        }
-        else{
-            emptyListView.setText(R.string.no_internet);
-        }
         emptyListView.setText(R.string.no_earthquake);
         mAdapter.clear();
 
@@ -111,15 +113,16 @@ public class EarthquakeActivity extends AppCompatActivity implements LoaderCallb
         if (earthquakes != null && !earthquakes.isEmpty()) {
             mAdapter.addAll(earthquakes);
         }
-        Log.i(LOG_TAG,"onloadfinish");
+        Log.i(LOG_TAG, "onloadfinish");
     }
+
     @Override
     public void onLoaderReset(Loader<ArrayList<Earthquake>> loader) {
-        Log.i(LOG_TAG,"onloadreset");
+        Log.i(LOG_TAG, "onloadreset");
         mAdapter.clear();
-        }
-
-    private class earthQuakeAsyncTask extends AsyncTask<String,Void,ArrayList<Earthquake>>{
+    }
+}
+ /*   private class earthQuakeAsyncTask extends AsyncTask<String,Void,ArrayList<Earthquake>>{
 
         @Override
     protected ArrayList<Earthquake> doInBackground(String... urls) {
@@ -146,4 +149,4 @@ public class EarthquakeActivity extends AppCompatActivity implements LoaderCallb
             }
         }
     }
-}
+}*/
