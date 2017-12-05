@@ -17,8 +17,11 @@ package com.example.android.quakereport;
 
 import android.app.LoaderManager;
 import android.content.AsyncTaskLoader;
+import android.content.Context;
 import android.content.Intent;
 import android.content.Loader;
+import android.net.ConnectivityManager;
+import android.net.NetworkInfo;
 import android.net.Uri;
 import android.nfc.Tag;
 import android.os.AsyncTask;
@@ -33,6 +36,9 @@ import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.ListView;
 import android.app.LoaderManager.LoaderCallbacks;
+import android.widget.ProgressBar;
+import android.widget.TextView;
+
 import java.io.BufferedReader;
 import java.io.IOError;
 import java.io.IOException;
@@ -52,12 +58,14 @@ public class EarthquakeActivity extends AppCompatActivity implements LoaderCallb
     public static final String USGS_REQUEST_URL =
             "https://earthquake.usgs.gov/fdsnws/event/1/query?format=geojson&eventtype=earthquake&orderby=time&minmag=6&limit=10";
     private EarthquakeAdapter mAdapter;
+    TextView emptyListView;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.earthquake_activity);
+        emptyListView=(TextView)findViewById(R.id.empty);
         ListView earthquakeListView = (ListView) findViewById(R.id.list);
-
+        earthquakeListView.setEmptyView(emptyListView);
         mAdapter = new EarthquakeAdapter(this, new ArrayList<Earthquake>());
         earthquakeListView.setAdapter(mAdapter);
         earthquakeListView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
@@ -69,17 +77,32 @@ public class EarthquakeActivity extends AppCompatActivity implements LoaderCallb
                 startActivity(websiteeIntent);
             }
         });
+        earthQuakeAsyncTask task = new earthQuakeAsyncTask();
+        task.execute(USGS_REQUEST_URL);
+
         LoaderManager loaderManager=getLoaderManager();
         loaderManager.initLoader(EARTHQUAKE_LOADER_ID,null,this);
     }
 
     @Override
     public Loader<ArrayList<Earthquake>> onCreateLoader(int i, Bundle bundle) {
+        Log.i(LOG_TAG,"in create loader");
         return new EarthquakeLoader(this,USGS_REQUEST_URL);
     }
 
     @Override
     public void onLoadFinished(Loader<ArrayList<Earthquake>> loader, ArrayList<Earthquake> earthquakes) {
+        ConnectivityManager cm= (ConnectivityManager)getSystemService(Context.CONNECTIVITY_SERVICE);
+        NetworkInfo networkInfo=cm.getActiveNetworkInfo();
+        boolean connected=networkInfo.isConnected();
+        if(connected&&networkInfo!=null) {
+            View progressBar = findViewById(R.id.loading);
+            progressBar.setVisibility(View.GONE);
+        }
+        else{
+            emptyListView.setText(R.string.no_internet);
+        }
+        emptyListView.setText(R.string.no_earthquake);
         mAdapter.clear();
 
         // If there is a valid list of {@link Earthquake}s, then add them to the adapter's
@@ -87,13 +110,15 @@ public class EarthquakeActivity extends AppCompatActivity implements LoaderCallb
         if (earthquakes != null && !earthquakes.isEmpty()) {
             mAdapter.addAll(earthquakes);
         }
+        Log.i(LOG_TAG,"onloadfinish");
     }
     @Override
     public void onLoaderReset(Loader<ArrayList<Earthquake>> loader) {
+        Log.i(LOG_TAG,"onloadreset");
         mAdapter.clear();
         }
 
-   /* private class earthQuakeAsyncTask extends AsyncTask<String,Void,ArrayList<Earthquake>>{
+    private class earthQuakeAsyncTask extends AsyncTask<String,Void,ArrayList<Earthquake>>{
 
         @Override
     protected ArrayList<Earthquake> doInBackground(String... urls) {
@@ -119,5 +144,5 @@ public class EarthquakeActivity extends AppCompatActivity implements LoaderCallb
                 mAdapter.addAll(earthquakes);
             }
         }
-    }*/
+    }
 }
