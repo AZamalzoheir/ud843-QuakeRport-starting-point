@@ -18,7 +18,8 @@ public class EarthquakeLoader extends AsyncTaskLoader<ArrayList<Earthquake>> {
     }
 
     @Override
-    protected void onForceLoad() {
+    protected void onStartLoading() {
+        super.onStartLoading();
         onForceLoad();
     }
 
